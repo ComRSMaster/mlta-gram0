@@ -43,6 +43,10 @@ int parse(std::vector<rule>& parsed_rules, std::vector<std::string>& unique_toke
             std::println(stderr, "В одной строке должна быть ровно одна стрелка, ни одной не найдено");
             return 2;
         }
+        if (node.first.empty()) {
+            std::println(stderr, "Правило должно заменять хотя бы 1 символ");
+            return 2;
+        }
         full_rules.push_back(std::move(node));
     }
     // TODO: переписать сжатие координат на бор - оптимизация с O(nlogn) до O(n)
