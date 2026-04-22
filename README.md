@@ -33,3 +33,9 @@
 ```
 a₀ a₁ a₂ ... aₙ -> b₀ b₁ b₂ ... bₘ
 ```
+
+## Примеры:
+
+1. [Бесконечный цикл](examples/while_true.g0)
+2. [Инвертирование](examples/invert.g0)
+3. [Перебор всех двоичных слов](examples/iterate_N.g0)

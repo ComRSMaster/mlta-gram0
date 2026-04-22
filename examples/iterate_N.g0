@@ -1,0 +1,18 @@
+# Перебор всех двоичных слов
+
+. -> .start 0 .caret_left .end
+
+# Двигаем каретку направо
+
+.caret_right 0 -> 0 .caret_right
+.caret_right 1 -> 1 .caret_right
+.caret_right .end -> .caret_left .end
+
+# Прибавляем единицу
+
+0 .caret_left .end -> 1 .caret_left .end
+1 .caret_left .end -> .caret_add 0 .end
+0 .caret_add -> 1 .caret_right
+1 .caret_add -> .caret_add 0
+.start .caret_add -> .start .caret_right 1
+.start .caret_left -> .start .caret_right
