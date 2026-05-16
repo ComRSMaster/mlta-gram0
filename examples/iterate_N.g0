@@ -1,17 +1,19 @@
-# Перебор всех двоичных слов
+# Перебор всех двоичных слов (запускать с verbose, чтобы увидеть их)
 
-. -> .start 0 .caret_left .end
+# Начинаем с 0
+
+.B .E -> .b .start 0 .caret_left .e
 
 # Двигаем каретку направо
 
 .caret_right 0 -> 0 .caret_right
 .caret_right 1 -> 1 .caret_right
-.caret_right .end -> .caret_left .end
+.caret_right .e -> .caret_left .e
 
 # Прибавляем единицу
 
-0 .caret_left .end -> 1 .caret_left .end
-1 .caret_left .end -> .caret_add 0 .end
+0 .caret_left .e -> 1 .caret_left .e
+1 .caret_left .e -> .caret_add 0 .e
 0 .caret_add -> 1 .caret_right
 1 .caret_add -> .caret_add 0
 .start .caret_add -> .start .caret_right 1
