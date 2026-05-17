@@ -10,8 +10,5 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-add_executable(gram
-    src/main.cpp
-    src/parser.cpp
-    src/interpreter.cpp
-)
+add_subdirectory(src)
+add_subdirectory(tests)

@@ -1,8 +1,9 @@
 #pragma once
 
+#include <expected>
 #include <string>
-#include <vector>
 
-#include "rule.hpp"
+#include "parser.hpp"
 
-[[nodiscard]] int run(const std::vector<rule>& parsed_rules, uint32_t non_term_bal, std::vector<uint32_t>& current, std::string& result_string, const std::vector<std::string>& token_names, bool is_verbose);
+[[nodiscard]] std::expected<std::string, std::string> run(
+    const parse_result& parsed_data, bool is_verbose);

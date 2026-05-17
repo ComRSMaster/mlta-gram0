@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "debug_helpers.hpp"
 #include "interpreter.hpp"
 #include "iostream"
@@ -38,7 +40,9 @@ int main(int argc, char* argv[]) {
     }
 
     if (argc <= 1) {
-        return print_error("Usage: {} program.g0 [-v] [-i input_file] [-o output_file]", argv[0]);
+        return print_error(
+            "Usage: {} program.g0 [-v] [-i input_file] [-o output_file]",
+            argv[0]);
     }
 
     if (program_filename.empty()) {
@@ -47,7 +51,7 @@ int main(int argc, char* argv[]) {
 
     std::ifstream program_file(program_filename);
     if (!program_file) {
-        return print_error("Cannot open file '{}'", program_filename);
+        return print_error("Cannot open program file '{}'", program_filename);
     }
 
     std::string input_string;
@@ -56,33 +60,28 @@ int main(int argc, char* argv[]) {
     } else {
         std::ifstream input_file(input_filename);
         if (!input_file) {
-            return print_error("Cannot open file '{}'", input_filename);
+            return print_error("Cannot open input file '{}'", input_filename);
         }
         std::getline(input_file, input_string);
     }
 
-    std::vector<rule> parsed_rules;
-    std::vector<uint32_t> parsed_input_string;
-    std::vector<std::string> token_names;
-    int non_term_bal = 0;
-    int status_code = parse(parsed_rules, non_term_bal, input_string, parsed_input_string, token_names, program_file);
-    if (status_code) {
-        return status_code;
+    auto parse_result = parse(program_file, input_string);
+    if (!parse_result) {
+        return print_error("{}", parse_result.error());
     }
 
-    std::string result_string;
-    status_code = run(parsed_rules, non_term_bal, parsed_input_string, result_string, token_names, is_verbose);
-    if (status_code) {
-        return status_code;
+    auto run_result = run(*parse_result, is_verbose);
+    if (!run_result) {
+        return print_error("{}", run_result.error());
     }
 
     if (output_filename.empty()) {
-        std::println("{}", result_string);
+        std::println("{}", *run_result);
     } else {
         std::ofstream output_file(output_filename);
         if (!output_file) {
-            return print_error("Cannot open file '{}'", output_filename);
+            return print_error("Cannot open output file '{}'", output_filename);
         }
-        output_file << result_string << "\n";
+        output_file << *run_result << "\n";
     }
 }
