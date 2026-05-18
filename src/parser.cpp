@@ -1,19 +1,34 @@
+#include "parser.hpp"
+
 #include <algorithm>
 #include <cstdint>
-#include <fstream>
-#include <print>
+#include <expected>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "rule.hpp"
 
-int parse(std::vector<rule>& parsed_rules, std::vector<std::string>& unique_tokens, std::ifstream& file) {
-    using full_rule_type = std::pair<std::vector<std::string>, std::vector<std::string>>;
+uint32_t get_token_idx(const std::string& token,
+                       const std::vector<std::string>& token_names) {
+    return std::lower_bound(token_names.begin(), token_names.end(), token) -
+           token_names.begin();
+};
+
+[[nodiscard]] std::expected<parse_result, std::string> parse(
+    std::istream& program_stream, std::istream& input_stream) {
+    parse_result result;
+    result.token_names = {".B", ".E", ".b", ".e"};
+    result.non_term_bal = 2;
+
+    using full_rule_type =
+        std::pair<std::vector<std::string>, std::vector<std::string>>;
     std::vector<full_rule_type> full_rules;
 
     std::string line;
-    while (std::getline(file, line)) {
+    int line_number = 0;
+    while (std::getline(program_stream, line)) {
+        ++line_number;
         size_t first_idx = line.find_first_not_of(" \t\r\n");
         if (first_idx == std::string::npos || line[first_idx] == '#') {
             continue;
@@ -22,12 +37,15 @@ int parse(std::vector<rule>& parsed_rules, std::vector<std::string>& unique_toke
         std::stringstream ss(std::move(line));
         std::string token;
         bool right_side = false;
+        bool has_non_term = false;
         full_rule_type node;
         while (ss >> token) {
             if (token == "->") {
                 if (right_side) {
-                    std::println(stderr, "В одной строке должна быть ровно одна стрелка, найдена лишняя");
-                    return 2;
+                    return std::unexpected(std::format(
+                        "Too many '->' in one line, only one allowed\nLine {}: "
+                        "{}",
+                        line_number, ss.str()));
                 }
                 right_side = true;
                 continue;
@@ -35,47 +53,84 @@ int parse(std::vector<rule>& parsed_rules, std::vector<std::string>& unique_toke
             if (right_side) {
                 node.second.push_back(token);
             } else {
+                if (token.starts_with('.')) {
+                    has_non_term = true;
+                }
                 node.first.push_back(token);
             }
-            unique_tokens.push_back(std::move(token));
+            result.token_names.push_back(std::move(token));
         }
         if (!right_side) {
-            std::println(stderr, "В одной строке должна быть ровно одна стрелка, ни одной не найдено");
-            return 2;
+            return std::unexpected(std::format(
+                "No '->' found in line\nLine {}: {}", line_number, ss.str()));
         }
-        if (node.first.empty()) {
-            std::println(stderr, "Правило должно заменять хотя бы 1 символ");
-            return 2;
+        if (!has_non_term) {
+            return std::unexpected(
+                std::format("Rule must replace at least one non-terminal "
+                            "symbol\nLine {}: {}",
+                            line_number, ss.str()));
         }
         full_rules.push_back(std::move(node));
     }
-    // TODO: переписать сжатие координат на бор - оптимизация с O(nlogn) до O(n)
-    std::sort(unique_tokens.begin(), unique_tokens.end());
-    unique_tokens.erase(std::unique(unique_tokens.begin(), unique_tokens.end()), unique_tokens.end());
 
-    parsed_rules.reserve(full_rules.size());
+    std::string input_string;
+    std::getline(input_stream, input_string);
+
+    std::stringstream ss(std::move(input_string));
+    std::string token;
+    while (ss >> token) {
+        result.token_names.push_back(std::move(token));
+    }
+
+    std::sort(result.token_names.begin(), result.token_names.end());
+    result.token_names.erase(
+        std::unique(result.token_names.begin(), result.token_names.end()),
+        result.token_names.end());
+
+    result.parsed_rules.reserve(full_rules.size());
     for (const auto& [left, right] : full_rules) {
         rule node;
 
         node.left.reserve(left.size());
         for (const auto& str : left) {
-            uint32_t idx = std::lower_bound(unique_tokens.begin(), unique_tokens.end(), str) - unique_tokens.begin();
+            uint32_t idx = std::lower_bound(result.token_names.begin(),
+                                            result.token_names.end(), str) -
+                           result.token_names.begin();
             node.left.push_back(idx);
-            if (str[0] == '.') {
+            if (str.starts_with('.')) {
                 --node.non_term_diff;
             }
         }
 
         node.right.reserve(right.size());
         for (const auto& str : right) {
-            uint32_t idx = std::lower_bound(unique_tokens.begin(), unique_tokens.end(), str) - unique_tokens.begin();
+            uint32_t idx = std::lower_bound(result.token_names.begin(),
+                                            result.token_names.end(), str) -
+                           result.token_names.begin();
             node.right.push_back(idx);
-            if (str[0] == '.') {
+            if (str.starts_with('.')) {
                 ++node.non_term_diff;
             }
         }
 
-        parsed_rules.push_back(std::move(node));
+        result.parsed_rules.push_back(std::move(node));
     }
-    return 0;
+
+    result.parsed_input_string.push_back(
+        get_token_idx(".B", result.token_names));
+
+    ss.clear();
+    ss.seekg(0);
+    while (ss >> token) {
+        if (token.starts_with('.')) {
+            ++result.non_term_bal;
+        }
+        result.parsed_input_string.push_back(
+            get_token_idx(token, result.token_names));
+    }
+
+    result.parsed_input_string.push_back(
+        get_token_idx(".E", result.token_names));
+
+    return result;
 }

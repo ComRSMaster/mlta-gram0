@@ -1,0 +1,16 @@
+# Разворот бинарной строки
+
+.E -> .done_sep .e
+
+.move0 0 -> 0 .move0
+.move0 1 -> 1 .move0
+.move1 0 -> 0 .move1
+.move1 1 -> 1 .move1
+.move0 .done_sep -> .done_sep 0
+.move1 .done_sep -> .done_sep 1
+
+.B 0 -> .B .move0
+.B 1 -> .B .move1
+
+# Удалить разделитель при завершении:
+.B .done_sep -> .b
