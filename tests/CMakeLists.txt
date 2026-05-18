@@ -1,4 +1,6 @@
 find_package(GTest REQUIRED)
+include(GoogleTest)
+enable_testing()
 
 add_executable(unit_tests
     unit_tests.cpp

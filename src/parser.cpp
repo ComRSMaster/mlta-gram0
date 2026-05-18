@@ -9,9 +9,18 @@
 
 #include "rule.hpp"
 
+uint32_t get_token_idx(const std::string& token,
+                       const std::vector<std::string>& token_names) {
+    return std::lower_bound(token_names.begin(), token_names.end(), token) -
+           token_names.begin();
+};
+
 [[nodiscard]] std::expected<parse_result, std::string> parse(
-    std::istream& program_stream, const std::string& input_string) {
+    std::istream& program_stream, std::istream& input_stream) {
     parse_result result;
+    result.token_names = {".B", ".E", ".b", ".e"};
+    result.non_term_bal = 2;
+
     using full_rule_type =
         std::pair<std::vector<std::string>, std::vector<std::string>>;
     std::vector<full_rule_type> full_rules;
@@ -56,21 +65,22 @@
                 "No '->' found in line\nLine {}: {}", line_number, ss.str()));
         }
         if (!has_non_term) {
-            return std::unexpected(std::format(
-                "Rule must replace at least one non-terminal symbol\nLine {}: {}",
-                line_number, ss.str()));
+            return std::unexpected(
+                std::format("Rule must replace at least one non-terminal "
+                            "symbol\nLine {}: {}",
+                            line_number, ss.str()));
         }
         full_rules.push_back(std::move(node));
     }
 
-    std::stringstream ss(".B " + input_string + " .E");
+    std::string input_string;
+    std::getline(input_stream, input_string);
+
+    std::stringstream ss(std::move(input_string));
     std::string token;
     while (ss >> token) {
         result.token_names.push_back(std::move(token));
     }
-
-    result.token_names.push_back(".b");
-    result.token_names.push_back(".e");
 
     std::sort(result.token_names.begin(), result.token_names.end());
     result.token_names.erase(
@@ -106,17 +116,21 @@
         result.parsed_rules.push_back(std::move(node));
     }
 
+    result.parsed_input_string.push_back(
+        get_token_idx(".B", result.token_names));
+
     ss.clear();
     ss.seekg(0);
     while (ss >> token) {
         if (token.starts_with('.')) {
             ++result.non_term_bal;
         }
-        uint32_t idx = std::lower_bound(result.token_names.begin(),
-                                        result.token_names.end(), token) -
-                       result.token_names.begin();
-        result.parsed_input_string.push_back(idx);
+        result.parsed_input_string.push_back(
+            get_token_idx(token, result.token_names));
     }
+
+    result.parsed_input_string.push_back(
+        get_token_idx(".E", result.token_names));
 
     return result;
 }

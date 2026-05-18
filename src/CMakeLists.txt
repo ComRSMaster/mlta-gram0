@@ -1,6 +1,8 @@
 add_library(gram_lib
     parser.cpp
     interpreter.cpp
+    launcher.cpp
+    cli.cpp
 )
 
 add_executable(gram

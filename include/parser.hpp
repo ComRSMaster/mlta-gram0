@@ -15,4 +15,4 @@ struct parse_result {
 };
 
 [[nodiscard]] std::expected<parse_result, std::string> parse(
-    std::istream& program_stream, const std::string& input_string);
+    std::istream& program_stream, std::istream& input_stream);

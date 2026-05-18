@@ -11,4 +11,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(src)
-add_subdirectory(tests)
+
+option(BUILD_TESTING "Build the testing suite" OFF)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
