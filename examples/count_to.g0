@@ -1,0 +1,39 @@
+# Вывод всех двоичных слов через запятую от 0 до введенного двоичного числа
+
+.E -> .e
+
+# Только 0 и пустое слово - частные случаи
+
+.B 0 .e -> .b 0 .e
+.B .e -> .b .e
+
+# Отбрасываем незначащие нули
+
+.B 0 -> .B
+
+# Вычитаем единицу
+
+0 .sub_left -> .sub_left 0
+1 .sub_left -> .sub_left 1
+, .sub_left -> .caret_left ,
+
+0 .caret_left -> .caret_left 1
+.B 1 .caret_left , -> .b 0 ,
+.B 1 .caret_left -> .B
+1 .caret_left -> 0
+
+# Копируем первое число в начало
+
+, .copy0 -> 0 ,
+, .copy1 -> 1 ,
+
+0 .copy0 -> .copy0 0
+1 .copy0 -> .copy0 1
+0 .copy1 -> .copy1 0
+1 .copy1 -> .copy1 1
+
+.copy_sep 0 -> .copy0 0 .copy_sep
+.copy_sep 1 -> .copy1 1 .copy_sep
+.copy_sep -> .sub_left
+
+.B -> .B , .copy_sep
